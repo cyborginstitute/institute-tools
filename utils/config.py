@@ -70,7 +70,7 @@ def get_conf_file(file, directory=None):
 
 def load_conf():
     try:
-        project_root_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
+        project_root_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
         print(project_root_dir)
         conf = BuildConfiguration(filename='conf.yaml',
                                   directory=os.path.join(project_root_dir, 'bin'))
