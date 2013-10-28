@@ -1,0 +1,14 @@
+git:
+  repo: institute-tools
+  url: git
+project:
+  name: institute-tools
+  url: http://cyborginstitute.org
+  tag: 'projects/tools'
+build: 
+  paths:
+    buildsystem: build/institute-tools
+    builddata: config
+    source: source
+    output: build
+...
