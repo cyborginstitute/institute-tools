@@ -1,3 +1,5 @@
+import os
+
 from shell import shell_value
 
 def get_commit(path=None):

@@ -1,3 +1,4 @@
+import json
 import yaml
 
 def ingest_json_list(filename):

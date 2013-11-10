@@ -1,9 +1,8 @@
 import os
 from files import symlink
-from shutil import rmtree, copyfile
-import subprocess
+from shutil import rmtree
 
-reset_ref = "HEAD~"
+reset_ref = None
 
 def init_fs(buildsystem):
     fab_dir = 'fabfile'
@@ -17,6 +16,12 @@ def init_fs(buildsystem):
 
     symlink(name=os.path.join(buildsystem, 'fabsrc', 'utils'),
             target=os.path.join(os.path.abspath(buildsystem), 'utils'))
+
+    symlink(name=os.path.join(buildsystem, 'stats', 'utils'),
+            target=os.path.join(os.path.abspath(buildsystem), 'utils'))
+
+    symlink(name=os.path.join(buildsystem, 'fabsrc', 'stats'),
+            target=os.path.join(os.path.abspath(buildsystem), 'stats'))
 
     # copyfile(src=os.path.join(os.path.abspath(buildsystem), 'bin', 'bootstrap.py'),
     #          dst=os.getcwd())
