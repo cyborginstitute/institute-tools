@@ -4,9 +4,8 @@ import operator
 from itertools import groupby
 
 from utils.files import expand_tree
-from utils.config import lazy_config, ingest_yaml_doc, ingest_yaml_list
+from utils.config import lazy_config, ingest_yaml_doc
 from utils.grep import grep
-
 
 def include_files(conf=None):
     conf = lazy_config(conf)

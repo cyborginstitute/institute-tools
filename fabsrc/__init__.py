@@ -17,7 +17,7 @@ import sphinx
 import stats
 
 from jobs import force, serial
-
+from deploy import deploy
 
 @task
 def conf(conf=None):

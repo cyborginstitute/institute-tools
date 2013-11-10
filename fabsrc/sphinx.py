@@ -98,7 +98,7 @@ def build(target, conf=None):
                             get_sphinx_args(sconf.tags))
 
     out = command(sphinx_cmd, capture=True)
-    output_sphinx_stream(out)
+    output_sphinx_stream('\n'.join([out.err, out.out]), target, conf)
 
     puts('[sphinx] [{0}]: completed build at {1}'.format(target, timestamp()))
 
@@ -147,7 +147,7 @@ def finalize(target, sconf, conf):
     jobs = {
         'html': [
             {'job': html_tarball,
-             'args': []
+             'args': [conf]
              },
         ],
         'dirhtml': [],
@@ -162,17 +162,17 @@ def finalize(target, sconf, conf):
                              })
 
     puts('[sphinx] [post]: running post-processing steps.')
-    count = runner(
-        itertools.chain(jobs[target], jobs['all']), parallel=False, retval='results')
+    count = runner(itertools.chain(jobs[target], jobs['all']))
     puts('[sphinx] [post]: completed {0} post-processing steps'.format(count))
 
 
 def html_tarball(conf):
-    copy_if_needed(os.path.join(conf.paths.projectroot,
-                                conf.paths.includes, 'hash.rst'),
-                   os.path.join(conf.paths.projectroot,
-                                conf.paths.output,
-                                'html', 'release.txt'))
+    release_fn = os.path.join(conf.paths.projectroot,
+                              conf.paths.output,
+                              'html', 'release.txt')
+
+    with open(release_fn, 'w') as f:
+        f.write(conf.git.commit)
 
     basename = os.path.join(conf.paths.projectroot,
                             conf.paths.public,

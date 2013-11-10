@@ -52,11 +52,13 @@ def command(command, capture=False, ignore=False):
     if ignore is True:
         return out
     elif out.succeeded is True:
-        if capture is True: 
+        if capture is True:
             return out
         else:
             return None
     else:
+        print('[ERROR]: ' + out.cmd)
+        print('[ERROR]: returned ' + out.return_code)
         raise CommandError
 
 def build_platform_notification(title, content):
