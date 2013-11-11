@@ -22,12 +22,12 @@ additional flexibility and control.
 Project Links
 -------------
 
-- Bug Tracking <https://issues.cyborginstitute.net/buglist.cgi?product=institute&component=infrastructure&resolution=--->`_
+- `Bug Tracking <https://issues.cyborginstitute.net/buglist.cgi?product=institute&component=infrastructure&resolution=--->`_
 
 - Repository
-  
+
   - `git.cyborginstitute.net <http://git.cyborginstitute.net/?p=dtf.git>`_
 
   - `github <http://github.com/cyborg-institute/institute-tools/>`_
-    
+
 - Documentation (*forthcoming*)
