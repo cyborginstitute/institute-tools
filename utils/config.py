@@ -47,20 +47,29 @@ def load_conf(path=None):
         try:
             project_root_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
             conf = BuildConfiguration(filename='conf.yaml',
-                                      directory=os.path.join(project_root_dir))
+                                      directory=os.path.join(project_root_dir, 'config'))
         except IOError:
             project_root_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
             conf = BuildConfiguration(filename='conf.yaml',
-                                      directory=os.path.join(project_root_dir))
+                                      directory=project_root_dir)
+        except IOError:
+            project_root_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+            conf = BuildConfiguration(filename='conf.yaml',
+                                      directory=project_root_dir)
     else:
         try:
             project_root_dir = path
             conf = BuildConfiguration(filename='conf.yaml',
-                                      directory=os.path.join(project_root_dir, 'bin'))
+                                      directory=os.path.join(project_root_dir, 'config'))
         except IOError:
             project_root_dir = path
             conf = BuildConfiguration(filename='conf.yaml',
-                                      directory=os.path.join(project_root_dir))
+                                      directory=project_root_dir)
+        except IOError:
+            project_root_dir = path
+            conf = BuildConfiguration(filename='conf.yaml',
+                                      directory=os.path.join(project_root_dir, 'bin'))
+
 
     conf.paths.projectroot = project_root_dir
     return conf
