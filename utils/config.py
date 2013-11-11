@@ -42,9 +42,13 @@ def get_conf_file(file, directory=None):
 
     return os.path.join(directory, conf_file)
 
-def load_conf():
+def load_conf(path=None):
     try:
         project_root_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+        conf = BuildConfiguration(filename='conf.yaml',
+                                  directory=os.path.join(project_root_dir, 'bin'))
+    except IOError:
+        project_root_dir = path
         conf = BuildConfiguration(filename='conf.yaml',
                                   directory=os.path.join(project_root_dir, 'bin'))
     except IOError:
@@ -55,8 +59,8 @@ def load_conf():
     conf.paths.projectroot = project_root_dir
     return conf
 
-def get_conf():
-    conf = load_conf()
+def get_conf(path=None):
+    conf = load_conf(path)
 
     conf['system'] = AttributeDict()
     if os.path.exists('/etc/arch-release'):

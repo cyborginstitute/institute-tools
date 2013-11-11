@@ -5,9 +5,9 @@ import pkg_resources
 import itertools
 from multiprocessing import cpu_count
 
-from fabric.api import task, abort, puts, local
+from fabric.api import task, abort, puts, local, runs_once
 
-from utils.config import lazy_config, BuildConfiguration
+from utils.config import lazy_config, BuildConfiguration, get_conf
 from utils.files import create_link, copy_if_needed
 from utils.archives import tarball
 from utils.data import timestamp
@@ -18,14 +18,13 @@ from utils.shell import command, build_platform_notification
 from dependencies import refresh_dependencies
 from jobs import runner
 
-
 def get_sphinx_args(tag):
     if pkg_resources.get_distribution("sphinx").version.startswith('1.2b3'):
         return '-j ' + str(cpu_count() + 1) + ' '
     else:
         return ''
 
-
+@runs_once
 @task
 def prereq(conf=None):
     conf = lazy_config(conf)
@@ -55,28 +54,35 @@ def generate_source(conf=None):
         os.makedirs(target)
         puts('[sphinx-prep]: created ' + target)
     elif not os.path.isdir(target):
-        abort(
-            '[sphinx-prep]: {0} exists and is not a directory'.format(target))
+        abort('[sphinx-prep]: {0} exists and is not a directory'.format(target))
 
     source_dir = os.path.join(conf.paths.projectroot, conf.paths.source)
 
-    local(
-        'rsync --checksum --recursive --delete {0} {1}'.format(source_dir, target))
+    local('rsync --checksum --recursive --delete {0} {1}'.format(source_dir, target))
     puts('[sphinx]: updated source in {0}'.format(target))
 
 
 @task
-def build(target, conf=None):
-    conf = lazy_config(conf)
+def build(*targets):
+    conf = get_conf()
 
-    sconf = BuildConfiguration(
-        'sphinx.yaml', os.path.join(conf.paths.projectroot, conf.paths.builddata))
+    prereq(conf)
+
+    if len(targets) <= 1:
+        sphinx_build_worker(targets[0], conf)
+    else:
+        jobs = [{ 'job': sphinx_build_worker, 'args': [t, conf] } for t in targets ]
+        runner(jobs, retval=None)
+
+def sphinx_build_worker(target, conf, do_post=True):
+    sconf = BuildConfiguration(filename='sphinx.yaml',
+                               directory=os.path.join(conf.paths.projectroot,
+                                                      conf.paths.builddata))
 
     if target in sconf:
         sconf = sconf[target]
     else:
-        abort(
-            '[sphinx] [ERROR]: {0} is not a supported builder'.format(target))
+        abort('[sphinx] [ERROR]: {0} is not a supported builder'.format(target))
 
     if 'root' not in sconf:
         sconf.root = os.path.join(conf.paths.projectroot, conf.paths.output)
@@ -103,7 +109,6 @@ def build(target, conf=None):
     puts('[sphinx] [{0}]: completed build at {1}'.format(target, timestamp()))
 
     finalize(target, sconf, conf)
-
 
 def output_sphinx_stream(out, builder, conf=None):
     conf = lazy_config(conf)
@@ -150,7 +155,11 @@ def finalize(target, sconf, conf):
              'args': [conf]
              },
         ],
-        'dirhtml': [],
+        'dirhtml': [
+            {'job': dirhtml_migration,
+             'args': [conf]
+            },
+        ],
         'latex': [],
         'all': [],
     }
@@ -161,10 +170,17 @@ def finalize(target, sconf, conf):
                                                    sconf.sitemap_config)]
                              })
 
-    puts('[sphinx] [post]: running post-processing steps.')
-    count = runner(itertools.chain(jobs[target], jobs['all']))
-    puts('[sphinx] [post]: completed {0} post-processing steps'.format(count))
 
+    puts('[sphinx] [post] [{0}]: running post-processing steps.'.format(target))
+    count = runner(itertools.chain(jobs[target], jobs['all']))
+    puts('[sphinx] [post] [{0}]: completed {1} post-processing steps'.format(target, count))
+
+def dirhtml_migration(conf):
+    cmd = 'rsync -a {source}/ {destination}'
+    command(cmd.format(source=os.path.join(conf.paths.projectroot,
+                                           conf.paths.output, 'dirhtml'),
+                       destination=os.path.join(conf.paths.projectroot,
+                                                conf.paths.public)))
 
 def html_tarball(conf):
     release_fn = os.path.join(conf.paths.projectroot,

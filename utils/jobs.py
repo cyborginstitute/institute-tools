@@ -2,7 +2,10 @@ import os
 import datetime
 import json
 
-from multiprocessing import cpu_count, Pool
+import multiprocessing
+import multiprocessing.pool
+
+from multiprocessing import cpu_count
 
 from config import lazy_config
 from files import md5_file, expand_tree
@@ -136,8 +139,20 @@ def check_multi_dependency(target, dependency):
     return False
 
 
+##### Permit Nested Pool #####
+
+class NonDaemonProcess(multiprocessing.Process):
+    def _get_daemon(self):
+        return False
+    def _set_daemon(self, value):
+        pass
+    daemon = property(_get_daemon, _set_daemon)
+
+class NestedPool(multiprocessing.pool.Pool):
+    Process = NonDaemonProcess
+
 ############### Task Running Framework ###############
-    
+
 def runner(jobs, pool=None, parallel=True, force=False, retval='count'):
     if pool == 1 or parallel is False:
         return sync_runner(jobs, force, retval)
@@ -149,7 +164,7 @@ def runner(jobs, pool=None, parallel=True, force=False, retval='count'):
 
 def async_runner(jobs, force, pool, retval):
     try:
-        p = Pool()
+        p = NestedPool()
     except:
         print('[ERROR]: can\'t start pool, falling back to sync ')
         return sync_runner(jobs, force, retval)

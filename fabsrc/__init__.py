@@ -24,3 +24,7 @@ def conf(conf=None):
     if conf is None:
         conf = get_conf()
     puts(json.dumps(conf, indent=3))
+
+@task
+def publish():
+    sphinx.build('html', 'dirhtml')
