@@ -131,9 +131,9 @@ def output_sphinx_stream(out, builder, conf=None):
             elif l.startswith('WARNING: search index'):
                 continue
 
-        full_path = os.path.join(conf.paths.projectroot, conf.paths.branch_output)
-        if l.startswith(conf.paths.branch_output):
-            l = l[len(conf.paths.branch_output)+1:]
+        full_path = os.path.join(conf.paths.projectroot, conf.paths.output)
+        if l.startswith(conf.paths.output):
+            l = l[len(conf.paths.output)+1:]
         elif l.startswith(full_path):
             l = l[len(full_path)+1:]
 
@@ -144,7 +144,7 @@ def output_sphinx_stream(out, builder, conf=None):
             if g[1].endswith(g[0]):
                 continue
 
-        l = os.path.join(conf.build.paths.projectroot, l)
+        l = os.path.join(conf.paths.projectroot, l)
 
         print(l)
 
