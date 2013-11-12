@@ -5,7 +5,7 @@ import pkg_resources
 import itertools
 from multiprocessing import cpu_count
 
-from fabric.api import task, abort, puts, local, runs_once
+from fabric.api import task, abort, local, runs_once
 
 from utils.config import lazy_config, BuildConfiguration, get_conf
 from utils.files import create_link, copy_if_needed
@@ -33,12 +33,11 @@ def prereq(conf=None):
     jobs = itertools.chain()
 
     job_count = runner(jobs)
-    puts('[sphinx]: processed {0} build prerequisite jobs'.format(job_count))
+    print('[sphinx]: processed {0} build prerequisite jobs'.format(job_count))
 
     generate_source(conf)
     dep_count = refresh_dependencies(conf)
-    puts('[sphinx]: refreshed {0} dependencies'.format(dep_count))
-
+    print('[sphinx]: refreshed {0} dependencies'.format(dep_count))
 
     command(build_platform_notification('Sphinx',
             'Build in progress past critical phase.'))
@@ -53,14 +52,14 @@ def generate_source(conf=None):
 
     if not os.path.exists(target):
         os.makedirs(target)
-        puts('[sphinx-prep]: created ' + target)
+        print('[sphinx-prep]: created ' + target)
     elif not os.path.isdir(target):
         abort('[sphinx-prep]: {0} exists and is not a directory'.format(target))
 
     source_dir = os.path.join(conf.paths.projectroot, conf.paths.source)
 
     local('rsync --checksum --recursive --delete {0} {1}'.format(source_dir, target))
-    puts('[sphinx]: updated source in {0}'.format(target))
+    print('[sphinx]: updated source in {0}'.format(target))
 
 
 @task
@@ -91,9 +90,9 @@ def sphinx_build_worker(target, conf, do_post=True):
     dirpath = os.path.join(sconf.root, target)
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
-        puts('[{0}]: created {1}/{0}'.format(target, sconf.root))
+        print('[{0}]: created {1}/{0}'.format(target, sconf.root))
 
-    puts('[sphinx] [{0}]: starting build at {1}'.format(target, timestamp()))
+    print('[sphinx] [{0}]: starting build at {1}'.format(target, timestamp()))
 
     tags = ' '.join(['-t ' + i for i in sconf.tags])
     cmd = 'sphinx-build -b {0} {1} -q -d {2}/doctrees-{0} -c {3} {4} {2}/source {2}/{0}'
@@ -107,7 +106,7 @@ def sphinx_build_worker(target, conf, do_post=True):
     out = command(sphinx_cmd, capture=True)
     output_sphinx_stream('\n'.join([out.err, out.out]), target, conf)
 
-    puts('[sphinx] [{0}]: completed build at {1}'.format(target, timestamp()))
+    print('[sphinx] [{0}]: completed build at {1}'.format(target, timestamp()))
 
     finalize(target, sconf, conf)
 
@@ -222,19 +221,16 @@ def sitemap(config_path=None, conf=None):
     import sitemap_gen
 
     if not os.path.exists(config_path):
-        puts('[ERROR] [sitemap]: configuration file {0} does not exist. Returning early'.format(
-            config_path))
+        print('[ERROR] [sitemap]: configuration file {0} does not exist. Returning early'.format(config_path))
         return False
 
     sitemap = sitemap_gen.CreateSitemapFromFile(configpath=config_path,
                                                 suppress_notify=True)
     if sitemap is None:
-        puts(
-            '[ERROR] [sitemap]: failed to generate the sitemap due to encountered errors.')
+        print('[ERROR] [sitemap]: failed to generate the sitemap due to encountered errors.')
         return False
 
     sitemap.Generate()
 
-    puts('[sitemap]: generated sitemap according to the config file {0}'.format(
-        config_path))
+    print('[sitemap]: generated sitemap according to the config file {0}'.format(config_path))
     return True
