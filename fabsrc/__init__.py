@@ -27,4 +27,4 @@ def conf(conf=None):
 
 @task
 def publish():
-    sphinx.build('html', 'dirhtml')
+    sphinx.build('html', 'dirhtml', 'latex')

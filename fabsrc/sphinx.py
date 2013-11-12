@@ -17,6 +17,7 @@ from utils.shell import command, build_platform_notification
 
 from dependencies import refresh_dependencies
 from jobs import runner
+from pdf import build_pdfs
 
 def get_sphinx_args(tag):
     if pkg_resources.get_distribution("sphinx").version.startswith('1.2b3'):
@@ -160,9 +161,14 @@ def finalize(target, sconf, conf):
              'args': [conf]
             },
         ],
-        'latex': [],
+        'latex': [
+            {'job': build_pdfs,
+             'args': [conf]
+            }
+        ],
         'all': [],
     }
+
 
     if 'sitemap_config' in sconf:
         jobs[target].append({'job': sitemap,
@@ -170,10 +176,9 @@ def finalize(target, sconf, conf):
                                                    sconf.sitemap_config)]
                              })
 
-
-    puts('[sphinx] [post] [{0}]: running post-processing steps.'.format(target))
+    print('[sphinx] [post] [{0}]: running post-processing steps.'.format(target))
     count = runner(itertools.chain(jobs[target], jobs['all']))
-    puts('[sphinx] [post] [{0}]: completed {1} post-processing steps'.format(target, count))
+    print('[sphinx] [post] [{0}]: completed {1} post-processing steps'.format(target, count))
 
 def dirhtml_migration(conf):
     cmd = 'rsync -a {source}/ {destination}'
