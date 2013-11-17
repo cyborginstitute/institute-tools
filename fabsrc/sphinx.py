@@ -25,9 +25,7 @@ def get_sphinx_args(tag):
     else:
         return ''
 
-@runs_once
-@task
-def prereq(conf=None):
+def prereq(sconf, conf=None):
     conf = lazy_config(conf)
 
     jobs = itertools.chain()
@@ -35,7 +33,7 @@ def prereq(conf=None):
     job_count = runner(jobs)
     print('[sphinx]: processed {0} build prerequisite jobs'.format(job_count))
 
-    generate_source(conf)
+    generate_source(sconf, conf)
     dep_count = refresh_dependencies(conf)
     print('[sphinx]: refreshed {0} dependencies'.format(dep_count))
 
@@ -44,21 +42,18 @@ def prereq(conf=None):
 
     dump_file_hashes(conf.system.dependency_cache, conf)
 
-
-def generate_source(conf=None):
+def generate_source(sconf, conf=None):
     conf = lazy_config(conf)
 
-    target = os.path.join(conf.paths.projectroot, conf.paths.output)
+    target = sconf.build_source
 
     if not os.path.exists(target):
         os.makedirs(target)
         print('[sphinx-prep]: created ' + target)
-    elif not os.path.isdir(target):
+    elif not os.path.isdir(sconf.build_source):
         abort('[sphinx-prep]: {0} exists and is not a directory'.format(target))
 
-    source_dir = os.path.join(conf.paths.projectroot, conf.paths.source)
-
-    local('rsync --checksum --recursive --delete {0} {1}'.format(source_dir, target))
+    r = command('rsync --checksum --recursive --delete {0}/ {1}'.format(sconf.source, target), capture=True)
     print('[sphinx]: updated source in {0}'.format(target))
 
 
@@ -66,26 +61,56 @@ def generate_source(conf=None):
 def build(*targets):
     conf = get_conf()
 
-    prereq(conf)
-
-    if len(targets) <= 1:
-        sphinx_build_worker(targets[0], conf)
-    else:
-        jobs = [{ 'job': sphinx_build_worker, 'args': [t, conf] } for t in targets ]
-        runner(jobs, retval=None)
-
-def sphinx_build_worker(target, conf, do_post=True):
     sconf = BuildConfiguration(filename='sphinx.yaml',
                                directory=os.path.join(conf.paths.projectroot,
                                                       conf.paths.builddata))
 
-    if target in sconf:
-        sconf = sconf[target]
-    else:
-        abort('[sphinx] [ERROR]: {0} is not a supported builder'.format(target))
+    target_overrides = []
+    std_sconf = None
 
-    if 'root' not in sconf:
-        sconf.root = os.path.join(conf.paths.projectroot, conf.paths.output)
+    for target in targets:
+        if target not in sconf:
+            abort('[sphinx] [ERROR]: {0} is not a supported builder'.format(target))
+
+        if 'config' in sconf[target]:
+            target_overrides.append(target)
+
+            sconf[target].target = sconf[target].config.builder
+            sconf[target].source = os.path.join(conf.paths.projectroot,
+                                              sconf[target].config.source)
+            sconf[target].root = os.path.join(conf.paths.projectroot,
+                                              conf.paths.output,
+                                              sconf[target].config.tag)
+            sconf[target].build_source = os.path.join(sconf[target].root,
+                                                      conf.paths.source)
+        else:
+            sconf[target].target = target
+            sconf[target].source = os.path.join(conf.paths.projectroot,
+                                                conf.paths.source)
+            sconf[target].root = os.path.join(conf.paths.projectroot,
+                                              conf.paths.output)
+
+            sconf[target].build_source = os.path.join(sconf[target].root,
+                                                      'source')
+            if std_sconf is None:
+                std_sconf = sconf[target]
+
+    if len(target_overrides) > 0:
+        for tg in target_overrides:
+            prereq(sconf[tg], conf)
+
+    if std_sconf is not None:
+        prereq(std_sconf, conf)
+
+    if len(targets) <= 1:
+        sphinx_build_worker(targets[0], conf, sconf)
+    else:
+        jobs = [{ 'job': sphinx_build_worker, 'args': [t, conf, sconf] }
+                for t in targets ]
+        runner(jobs, retval=None)
+
+def sphinx_build_worker(target, conf, sconf, do_post=True):
+    sconf = sconf[target]
 
     dirpath = os.path.join(sconf.root, target)
     if not os.path.exists(dirpath):
@@ -95,13 +120,15 @@ def sphinx_build_worker(target, conf, do_post=True):
     print('[sphinx] [{0}]: starting build at {1}'.format(target, timestamp()))
 
     tags = ' '.join(['-t ' + i for i in sconf.tags])
-    cmd = 'sphinx-build -b {0} {1} -q -d {2}/doctrees-{0} -c {3} {4} {2}/source {2}/{0}'
+    cmd = 'sphinx-build -b {builder} {tags} -q -d {root}/doctrees-{builder} -c {config_path} {sphinx_args} {source} {root}/{builder}'
 
-    sphinx_cmd = cmd.format(target,
-                            tags,
-                            sconf.root,
-                            conf.paths.projectroot,
-                            get_sphinx_args(sconf.tags))
+    sphinx_cmd = cmd.format(builder=sconf.target,
+                            tags=tags,
+                            root=sconf.root,
+                            config_path=conf.paths.projectroot,
+                            sphinx_args=get_sphinx_args(sconf.tags),
+                            source=sconf.source
+        )
 
     out = command(sphinx_cmd, capture=True)
     output_sphinx_stream('\n'.join([out.err, out.out]), target, conf)
@@ -174,6 +201,9 @@ def finalize(target, sconf, conf):
                              'args': [os.path.join(conf.paths.projectroot,
                                                    sconf.sitemap_config)]
                              })
+
+    if target not in jobs:
+        jobs[target] = []
 
     print('[sphinx] [post] [{0}]: running post-processing steps.'.format(target))
     count = runner(itertools.chain(jobs[target], jobs['all']))
