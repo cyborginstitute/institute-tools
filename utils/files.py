@@ -65,7 +65,7 @@ def copy_if_needed(source_file, target_file, name='build'):
         shutil.copyfile(source_file, target_file)
 
         if name is not None:
-            print('[{0}]: created "{1}" which did not exist.'.format(name, source_file))
+            print('[{0}]: created "{1}" which did not exist.'.format(name, target_file))
     else:
         if md5_file(source_file) == md5_file(target_file):
             if name is not None:

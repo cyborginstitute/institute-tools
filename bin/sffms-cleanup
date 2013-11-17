@@ -1,0 +1,7 @@
+#!/bin/zsh
+
+SFFMS_FILE=$1
+
+while [ `pcregrep -c -M "^.chapter(.*)\{(.*)\}\n+.newscene" $SFFMS_FILE` -gt 0 ]; do
+    sed -i -r ':a;N;$!ba;s@(.)chapter.*\{(.*)\}\n{2}.newscene@\1chapter{\2}@m' $SFFMS_FILE
+done

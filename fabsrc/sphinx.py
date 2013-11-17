@@ -17,7 +17,7 @@ from utils.shell import command, build_platform_notification
 
 from dependencies import refresh_dependencies
 from jobs import runner
-from pdf import build_pdfs
+from pdf import build_pdfs, build_sffms
 
 def get_sphinx_args(tag):
     if pkg_resources.get_distribution("sphinx").version.startswith('1.2b3'):
@@ -192,9 +192,17 @@ def finalize(target, sconf, conf):
              'args': [conf]
             }
         ],
+        'sffms': [
+            { 'job': build_sffms,
+              'args': [conf]
+            }
+        ],
         'all': [],
     }
 
+
+    if target not in jobs:
+        jobs[target] = []
 
     if 'sitemap_config' in sconf:
         jobs[target].append({'job': sitemap,
@@ -202,11 +210,8 @@ def finalize(target, sconf, conf):
                                                    sconf.sitemap_config)]
                              })
 
-    if target not in jobs:
-        jobs[target] = []
-
     print('[sphinx] [post] [{0}]: running post-processing steps.'.format(target))
-    count = runner(itertools.chain(jobs[target], jobs['all']))
+    count = runner(itertools.chain(jobs[target], jobs['all']), pool=1)
     print('[sphinx] [post] [{0}]: completed {1} post-processing steps'.format(target, count))
 
 def dirhtml_migration(conf):
