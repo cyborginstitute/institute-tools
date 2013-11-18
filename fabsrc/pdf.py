@@ -1,4 +1,5 @@
 import os.path
+import re
 
 from utils.shell import command
 from utils.pdf import pdf_jobs
@@ -13,7 +14,9 @@ def build_pdfs(conf):
                 ( re.compile(r'\\code\{/(?!.*{}/|etc|usr|data|var|srv)'),
                   r'\code{' + conf.project.url + r'/' + conf.project.tag) ]
 
-    pdf_processor(conf=conf, regexes=regexes)
+    pdfs = ingest_yaml_list(os.path.join(conf.paths.builddata, 'pdfs.yaml'))
+
+    pdf_processor(conf=conf, pdfs=pdfs, regexes=regexes)
 
 def build_sffms(conf):
     munge_script = os.path.join(conf.paths.buildsystem, 'bin', 'sffms-cleanup')
