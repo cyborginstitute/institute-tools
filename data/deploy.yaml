@@ -2,7 +2,6 @@ production:
   hosts:
     - 'tychoish@foucault.cyborginstitute.net'
   args: []
----
 docsprod:
   hosts:
     - 'institute@foucault.cyborginstitue.net'
