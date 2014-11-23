@@ -1,0 +1,8 @@
+tychoish:
+  hosts:
+    - 'tychoish@foucault.cyborginstitute.net'
+  args: []
+institute:
+  hosts:
+    - 'institute@foucault.cyborginstitue.net'
+...
