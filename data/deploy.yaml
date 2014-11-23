@@ -1,8 +1,10 @@
-tychoish:
+production:
   hosts:
     - 'tychoish@foucault.cyborginstitute.net'
   args: []
-institute:
+---
+docsprod:
   hosts:
     - 'institute@foucault.cyborginstitue.net'
+
 ...
