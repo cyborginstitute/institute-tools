@@ -6,5 +6,4 @@ production:
 docsprod:
   hosts:
     - 'institute@foucault.cyborginstitue.net'
-
 ...
