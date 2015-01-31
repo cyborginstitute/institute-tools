@@ -132,6 +132,9 @@
     {%- if prev %}
     <link rel="prev" title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />
     {%- endif %}
+
+    <link rel="openid.server" href="https://www.livejournal.com/openid/server.bml">.
+    <link rel="openid2.provider" href="https://www.livejournal.com/openid/server.bml">
 {%- endblock %}
 {%- block extrahead %} {% endblock %}
   </head>
