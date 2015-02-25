@@ -4,5 +4,5 @@ production:
   args: []
 docsprod:
   hosts:
-    - 'institute@foucault.cyborginstitue.net'
+    - 'institute@foucault.cyborginstitute.net'
 ...
